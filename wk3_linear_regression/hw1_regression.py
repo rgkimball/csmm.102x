@@ -28,15 +28,24 @@ def ridge_regression(X, y, lmda):
     return wts
 
 
-def lin_reg(X, y, x1, l, s2):
-    # Input : Arguments to the function
-    # Return : active, Final list of values to write in the file
+def lin_reg(X, y, x1, lm, s2):
+    """
+    Generator function to iteratively improve a L2-linear regression through Bayesian active learning.
+
+    :param X: np.array, dxn matrix of input covariates
+    :param y: np.array, nx1 matrix of target dependent variable
+    :param x1: np.array, dxn matrix of test sample for iterative sampling
+    :param lm: numeric, regularization parameter lambda
+    :param s2: float, sigma squared
+    :return: (np.array(), int)
+        a tuple containing the current optimal weights and the index of the most uncertain row from the test set
+    """
     d = X.shape[1]
     # Initialize autocorrelation & cross-correlation matrices
     ac = np.zeros((d, d))
     cc = np.zeros(d)
     # Initialize regularization matrix
-    ld = l * np.eye(d)
+    ld = lm * np.eye(d)
 
     # Preserve a copy of our test data so we can find the original data locations after we remove rows.
     s_x1 = x1.copy()
@@ -57,10 +66,11 @@ def lin_reg(X, y, x1, l, s2):
         # Recalculate our predictions based on the new covariate coefficients
         y = X.dot(w)
 
-        yield w, int(index)# + 1
+        yield w, int(index) + 1
 
 
 if __name__ == '__main__':
+    print('Running ', ' '.join(sys.argv))
     # Parse CLI arguments and load data from disk
     lambda_input = int(sys.argv[1])
     sigma2_input = float(sys.argv[2])
@@ -75,4 +85,4 @@ if __name__ == '__main__':
 
     # Save output
     np.savetxt('wRR_{}.csv'.format(lambda_input), wRR, delimiter='\n')
-    np.savetxt('active_{}_{}.csv'.format(lambda_input, int(sigma2_input)), active, delimiter=',')
+    np.savetxt('active_{}_{}.csv'.format(lambda_input, int(sigma2_input)), [active], fmt='%d', delimiter=',')
