@@ -1,5 +1,5 @@
 """
-Submission for Project 1 of Columbia University's ML EdX course (Linear Regression).
+Submission for Project 2 of Columbia University's ML EdX course (Classification).
 
     author: @rgkimball
     date: 3/10/2021

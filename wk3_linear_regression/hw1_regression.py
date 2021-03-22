@@ -15,7 +15,7 @@ def ridge_regression(X, y, lmda):
     """
     Implements closed-form solution to the ridge regression.
 
-    This function is not used since lin_reg() implements parts 1 & 2, as suggested in the assignment FAQs.
+    This function is not used since lin_reg() implements parts 1 & 2
 
     :param X: dxn matrix of input covariates
     :param y: nx1 matrix of target dependent variable
