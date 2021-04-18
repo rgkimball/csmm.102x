@@ -8,8 +8,6 @@ Implements both the K-means and EM algorithms.
 
 import sys
 import numpy as np
-import scipy as sp
-import pandas as pd
 
 
 def cast_2d_3d(arr, n=2):
@@ -97,7 +95,7 @@ def em_gmm(data, clusters, iterations):
                 _denom = (x_i - mean[k]).T.dot(inv_cov).dot(x_i - mean[k])
                 phi[row, k] = prior[k] * (2 * np.pi)**(-d/2) * sqrt_det * np.exp(_denom * -0.5)
             # Transform phi into row-wise probabilities
-            phi /= phi.sum(axis=1)[:, np.newaxis]
+        phi = phi / phi.sum(axis=1)[:, np.newaxis]
 
         # Maximization step:
         nk = np.sum(phi, axis=0)
