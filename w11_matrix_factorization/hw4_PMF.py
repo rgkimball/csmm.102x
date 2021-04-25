@@ -43,57 +43,60 @@ def pmf(data, lam=2, variance=0.1, d=5, iterations=50):
     # Pivot data into i by j matrix of users (rows) and movies (columns) with ratings (values)
     users, row_pos = np.unique(data[:, 0], return_inverse=True)
     movies, col_pos = np.unique(data[:, 1], return_inverse=True)
-    M = np.zeros((np.amax(data[:, 0]), np.amax(data[:, 1])), dtype=data.dtype)
-    M[row_pos, col_pos] = data[:, 2]
+    n_users, n_movies = int(max(data[:, 0])), int(max(data[:, 1]))
+    M = np.zeros((n_users, n_movies), dtype=data.dtype)
+    for row in data:
+        user, movie, rating = row
+        M[int(user) - 1, int(movie) - 1] = rating
+    # M[row_pos, col_pos] = data[:, 2]
 
     # Initialize objective results and user/object matrices
     objective = np.zeros((iterations, 1))
-    v = np.random.normal(0, np.sqrt(1/lam), (len(movies), d))
-    u = np.zeros((len(users), d))
+    v = np.random.normal(0, np.sqrt(1/lam), (n_movies, d))
+    u = np.zeros((n_users, d))
     iter_u = []
     iter_v = []
 
     # Learn objective
     for iter in range(iterations):
-        for user in map(int, users):
-            index = np.where(users == user)[0][0]
-            # V matrix for objects that have been rated by user i
-            objs = np.nonzero(M[index, :])
+        for user in range(n_users):
+            # index = np.where(users == user)[0][0]
+            # V matrix for objects that have been rated by user "user"
+            objs = np.nonzero(M[user, :])
             this = v[objs]
             left = np.linalg.inv((lam * variance * np.eye(d)) + xTx(this))
-            right = (this * M[index, objs][:].T).sum(axis=0)
-            u[index, :] = left.dot(right)
+            right = (this * M[user, objs][:].T).sum(axis=0)
+            u[user, :] = left.dot(right)
         iter_u.append(u.copy())
 
-        for obj in map(int, movies):
-            index = np.where(movies == obj)[0][0]
-            usrs = np.nonzero(M[:, index])
+        for obj in range(n_movies):
+            # index = np.where(movies == obj)[0][0]
+            # U matrix for users that have rated object "obj"
+            usrs = np.nonzero(M[:, obj])
             this = u[usrs]
             left = np.linalg.inv((lam * variance * np.eye(d)) + xTx(this))
-            right = (this * M[usrs, index][:].T).sum(axis=0)
-            v[index, :] = left.dot(right)
+            right = (this * M[usrs, obj][:].T).sum(axis=0)
+            v[obj, :] = left.dot(right)
         iter_v.append(v.copy())
 
-        t2, t3 = map(lambda m: ((lam / 2) * np.linalg.norm(m, axis=1) ** 2).sum(), [u, v])
-        t1 = 0
+        sum_u, sum_v = map(lambda m: ((lam / 2) * np.linalg.norm(m, axis=1) ** 2).sum(), [u, v])
+        c = 0
         for usr, obj, rtg in data:
-            i = np.where(users == usr)[0][0]
-            j = np.where(movies == obj)[0][0]
-            t1 += (rtg - np.dot(u[i - 1, :], v[j - 1, :])) ** 2
-        t1 /= 2 * variance
-        objective[iter] = -t1 - t2 - t3
+            c += (rtg - np.dot(u[int(usr) - 1, :], v[int(obj) - 1, :])) ** 2
+        c /= 2 * variance
+        objective[iter] = -c - sum_u - sum_v
 
     return objective, iter_u, iter_v
 
 
 def save_pmf_output(loss, u_matrices, v_matrices, iterations):
     # A comma-separated file containing the PMF objective function along each row
-    np.savetxt('objective.csv', loss, delimiter=',', fmt='%1.2f')
+    np.savetxt('objective.csv', loss, delimiter=',', fmt='%1.10f')
     # A CSV for each iteration specified with the locations corresponding to each row ("user") of M, "U-{i_n}"
     # and the locations corresponding to the objects of the missing matrix M, "V-{i_n}"
     for i_n in iterations:
-        np.savetxt('U-{}.csv'.format(i_n), u_matrices[i_n - 1], delimiter=',', fmt='%1.5f')
-        np.savetxt('V-{}.csv'.format(i_n), v_matrices[i_n - 1], delimiter=',', fmt='%1.5f')
+        np.savetxt('U-{}.csv'.format(i_n), u_matrices[i_n - 1], delimiter=',', fmt='%1.10f')
+        np.savetxt('V-{}.csv'.format(i_n), v_matrices[i_n - 1], delimiter=',', fmt='%1.10f')
 
 
 if __name__ == '__main__':
